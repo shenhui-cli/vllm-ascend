@@ -4,7 +4,7 @@
 
 The Qwen3-Next model is a sparse MoE (Mixture of Experts) model with high sparsity. Compared to the MoE architecture of Qwen3, it has introduced key improvements in aspects such as the hybrid attention mechanism and multi-token prediction mechanism, enhancing the training and inference efficiency of the model under long contexts and large total parameter scales.
 
-This document will present the core verification steps of the model, including supported features, environment preparation, as well as accuracy and performance evaluation. Qwen3 Next is currently using Triton Ascend, which is in the experimental phase. In subsequent versions, its performance related to stability and accuracy may change, and performance will be continuously optimized.
+This document will present the core verification steps of the model, including supported features, environment preparation, as well as accuracy and performance evaluation. Qwen3-Next is currently using Triton Ascend, which is in the experimental phase. In subsequent versions, its performance related to stability and accuracy may change, and performance will be continuously optimized.
 
 The `Qwen3-Next` model is first supported in `vllm-ascend:v0.10.2rc1` and can stably run in v0.16.0 and later version.
 
@@ -18,7 +18,7 @@ Refer to [Feature Guide](../../user_guide/feature_guide/index.md) to get the fea
 
 ### 3.1 Model Weight
 
-`Qwen3-Next-80B-A3B-Instruct`: requires **8 cards in 1 Atlas 800 A3 (64GB × 16) node** or **8 cards in 1 Atlas 800 A2 (64GB × 8) node**. [Model Weight](https://modelscope.cn/models/Qwen/Qwen3-Next-80B-A3B-Instruct)
+`Qwen3-Next-80B-A3B-Instruct`: requires **8 cards in 1 Atlas 800 A3 (64GB × 16) node** or **8 cards in 1 Atlas 800 A2 (64GB × 8) node**. [Model Weight](https://www.modelscope.cn/models/Qwen/Qwen3-Next-80B-A3B-Instruct)
 
 ## 4 Installation
 
@@ -28,7 +28,7 @@ Select an image based on your machine type and start the docker image on your no
 
 **A3 series:**
 
-Start the docker image on your each node.
+Start the docker image on each node.
 
 ```bash
 #!/bin/sh
@@ -69,7 +69,7 @@ docker run --rm \
 -it $IMAGE bash
 ```
 
-The Qwen3 Next is using [Triton Ascend](https://gitee.com/ascend/triton-ascend) which is currently experimental. In future versions, there may be behavioral changes related to stability, accuracy, and performance improvement.
+The Qwen3-Next is using [Triton Ascend](https://gitee.com/ascend/triton-ascend) which is currently experimental. In future versions, there may be behavioral changes related to stability, accuracy, and performance improvement.
 
 **Installation Verification:**
 
@@ -158,7 +158,7 @@ curl http://localhost:8000/v1/chat/completions -H "Content-Type: application/jso
 }'
 ```
 
-Expected Result:
+Expected result:
 
 The service returns HTTP 200 OK with a JSON response containing the `choices` field. Example output (content truncated for brevity):
 
@@ -228,7 +228,7 @@ vllm bench serve --model Qwen/Qwen3-Next-80B-A3B-Instruct  --dataset-name random
 
 After about several minutes, you can get the performance evaluation result.
 
-The performance result is:  
+The performance result is:
 
 ```bash
 Hardware: A3-752T, 2 node
