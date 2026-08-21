@@ -23,6 +23,7 @@ The table below is the release compatibility matrix for vLLM Ascend release.
 
 | vLLM Ascend | vLLM              | Python          | Stable CANN |        PyTorch/torch_npu        |   Triton Ascend   |    Mooncake  |
 |-------------|-------------------|-----------------|-------------|---------------------------------|-------------------|--------------|
+| v0.23.0     | v0.23.0           | >= 3.10, < 3.13 | 9.1.0       | 2.10.0 / 2.10.0.post4           | 3.2.2             | v0.3.11.post1 |
 | v0.23.0rc1  | v0.23.0           | >= 3.10, < 3.13 | 9.0.1       | 2.10.0 / 2.10.0.post2           | 3.2.1             | v0.3.11.post1 |
 | v0.22.1rc1  | v0.22.1           | >= 3.10, < 3.13 | 9.0.0       | 2.10.0 / 2.10.0                 | 3.2.1             | v0.3.9       |
 | v0.21.0rc1  | v0.21.0           | >= 3.10, < 3.13 | 9.0.0       | 2.10.0 / 2.10.0                 | 3.2.1             | v0.3.9       |
@@ -87,6 +88,7 @@ Using `--no-build-isolation` can bypass build-environment resolution, so run
 
 | Date       | Event                                     |
 |------------|-------------------------------------------|
+| 2026.08.16 | v0.23.0 Final release, v0.23.0            |
 | 2026.07.20 | Release candidates, v0.23.0rc1            |
 | 2026.06.30 | Release candidates, v0.22.1rc1            |
 | 2026.06.16 | Release candidates, v0.21.0rc1            |
@@ -200,7 +202,7 @@ Notes:
 
 ## Software dependency management
 
-- `torch-npu`: Ascend Extension for PyTorch (torch-npu) releases a stable version to [PyPI](https://pypi.org/project/torch-npu)
+- `torch-npu`: TorchNPU releases a stable version to [PyPI](https://pypi.org/project/torch-npu)
   every 3 months, a development version (aka the POC version) every month, and a nightly version every day.
   The PyPI stable version **CAN** be used in vLLM Ascend final version, the monthly dev version **ONLY CAN** be used in
   vLLM Ascend RC version for rapid iteration, and the nightly version **CANNOT** be used in any vLLM Ascend version or branch.

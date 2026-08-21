@@ -30,6 +30,7 @@ from vllm.model_executor.layers.quantization import QuantizationConfig
 from vllm.utils.torch_utils import direct_register_custom_op
 from vllm.v1.attention.backend import AttentionMetadata
 
+from vllm_ascend.ascend_forward_context import _EXTRA_CTX
 from vllm_ascend.models.layer.attention.layer import DSAAttention
 from vllm_ascend.utils import (
     AscendDeviceType,
@@ -53,9 +54,7 @@ class DSAModules:
     indexer: torch.nn.Module | None
     compressor: torch.nn.Module | None
     swa_cache_layer: torch.nn.Module
-    topk_indices_buffer: torch.Tensor | None
     indexer_rotary_emb: torch.nn.Module | None = None
-    skip_topk: bool = False
 
 
 class AscendDeepseekSparseAttention(MultiHeadLatentAttentionWrapper):
@@ -107,9 +106,7 @@ class AscendDeepseekSparseAttention(MultiHeadLatentAttentionWrapper):
         self.attn_sink = dsa_modules.attn_sink
         self.indexer = dsa_modules.indexer
         self.compressor = dsa_modules.compressor
-        self.topk_indices_buffer = dsa_modules.topk_indices_buffer
         self.indexer_rotary_emb = dsa_modules.indexer_rotary_emb
-        self.skip_topk = dsa_modules.skip_topk
         self.prefix = prefix
 
         self.swa_cache_layer = dsa_modules.swa_cache_layer
@@ -145,8 +142,6 @@ class AscendDeepseekSparseAttention(MultiHeadLatentAttentionWrapper):
             attn_sink=self.attn_sink,
             eps=self.eps,
             swa_cache_layer=self.swa_cache_layer,
-            skip_topk=self.skip_topk,
-            topk_indices_buffer=self.topk_indices_buffer,
         )
 
         compilation_config = get_current_vllm_config().compilation_config
@@ -161,7 +156,7 @@ class AscendDeepseekSparseAttention(MultiHeadLatentAttentionWrapper):
         kv_cache: torch.Tensor | None = None,
         attn_metadata: AttentionMetadata | None = None,
     ) -> torch.Tensor:
-        need_gather_q_kv = get_forward_context().flash_comm_v1_enabled
+        need_gather_q_kv = bool(_EXTRA_CTX.flash_comm_v1_enabled)
         output_shape = hidden_states.shape
 
         output = torch.empty(output_shape, dtype=hidden_states.dtype, device=hidden_states.device)
@@ -183,10 +178,7 @@ def dsa_forward(
 ) -> None:
     forward_context: ForwardContext = get_forward_context()
     self = forward_context.no_compile_layers[layer_name]
-    if forward_context.attn_metadata:
-        attn_metadata = filter_metadata(forward_context.attn_metadata, self.prefix)
-    else:
-        attn_metadata = forward_context.attn_metadata
+    attn_metadata = forward_context.attn_metadata
 
     if attn_metadata is None:
         # Profiling run: forward() handles OTP by running _forward_o_proj on a
@@ -220,11 +212,6 @@ direct_register_custom_op(
 )
 
 
-def filter_metadata(metadata, prefix):
-    # filter using prefix, sort by key for deterministic order
-    return [v for k, v in sorted(metadata.items()) if k.startswith(prefix)]
-
-
 def _build_kv_cache(self, forward_context):
     """Construct the 6-tuple KV cache used by impl.forward()."""
     compress_kv_cache = None
@@ -244,16 +231,9 @@ def _build_kv_cache(self, forward_context):
     if self.compress_ratio == 4:
         indexer_state_cache = self.indexer.compressor.state_cache.kv_cache
         if get_ascend_device_type() in {AscendDeviceType.A5}:
-            indexer_k_cache, indexer_scale_cache, indexer_full_cache = (
-                self.indexer.k_cache.kv_cache[0][0],
-                self.indexer.k_cache.kv_cache[0][1],
-                self.indexer.k_cache.kv_cache[0][2],
-            )
+            indexer_k_cache, indexer_scale_cache, indexer_full_cache = unfold_kvcache(self.indexer.k_cache.kv_cache)
         else:
-            indexer_k_cache, indexer_scale_cache = (
-                self.indexer.k_cache.kv_cache[0][0],
-                self.indexer.k_cache.kv_cache[0][1],
-            )
+            indexer_k_cache, indexer_scale_cache = unfold_kvcache(self.indexer.k_cache.kv_cache)
 
     if get_ascend_device_type() in {AscendDeviceType.A5}:
         kv_cache = tuple(
